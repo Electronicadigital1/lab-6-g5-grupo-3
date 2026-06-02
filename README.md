@@ -2,6 +2,13 @@
 # Lab04 - Visualización usando pantalla LCD 16x2
 
 # Integrantes
+**Lady Lorena Cardenas Poveda**  
+Carrera: Ingeniería Eléctrica  
+Correo: llcardenasp@unal.edu.co  
+
+**Samuel Tovar Vásquez**  
+Carrera: Ingeniería Electrónica  
+Correo: satovarv@unal.edu.co  
 
 
 # Informe
@@ -14,8 +21,12 @@ Indice:
 4. [Conclusiones](#conclusiones)
 5. [Referencias](#referencias)
 
-## Diseño implementado
-### Descripción
+## Diseño implementado:
+
+El sistema se armó de forma modular en Verilog para que el flujo de datos fuera limpio: Entrada de datos (Teclado), luego el procesamiento (Validar la clave) y lograr la acción (Mover el motor).  Para que todo funcionara bien en la práctica y evitar problemas con los rebotes de los botones o los cambios de velocidad en los relojes, dividimos el código en 5 bloques principales conectados dentro de un módulo central (top_sistema.v):
+
+ <img width="1200" height="1600" alt="image" src="" />
+  
 
 ### Diagramas
 
