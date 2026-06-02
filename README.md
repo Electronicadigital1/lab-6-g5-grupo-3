@@ -68,7 +68,7 @@ El escáner del teclado trabaja con el reloj lento (1 kHz), mientras que la FSM 
 ---
 ### D. Evidencias
 
-
+<video src="https://github.com/TU_USUARIO/TU_REPO/blob/main/video.mp4?raw=true" width="100%" controls></video>
 
 
 ## 3. Conclusiones
