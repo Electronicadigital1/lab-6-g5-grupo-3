@@ -49,45 +49,32 @@ El teclado matricial físico demostró ser sumamente sensible. Inicialmente, con
 
 ### B. Uso de Máquinas de Estados Finitos (FSM)
 Tanto para el escaneo de pines como para la lógica de validación de la contraseña, se utilizaron estructuras de **máquinas de estados finitos**. Por ejemplo, el control de la contraseña transita de forma ordenada por los estados `IDLE` (espera), `INPUT` (captura de dígitos), `VERIFY` (comparación de contraseñas), y finalmente bifurca hacia `OPEN` (apertura) o `ERROR` (bloqueo).
-* **Utilidad del diseño con FSM:** Dividir el comportamiento en etapas lógicas bien definidas aporta grandes ventajas en hardware:
-   **Seguridad e predictibilidad:** El sistema tiene un comportamiento totalmente controlado; por ejemplo, el servomotor tiene prohibido activarse de la nada, ya que la FSM obliga al circuito a pasar estrictamente por el estado `VERIFY` antes de poder pisar el estado `OPEN`.
+* **Utilidad del diseño con FSM:** Dividir el comportamiento en etapas lógicas bien definidas aporta grandes ventajas en hardware: El sistema tiene un comportamiento totalmente controlado; por ejemplo, el servomotor tiene prohibido activarse de la nada, ya que la FSM obliga al circuito a pasar estrictamente por el estado `VERIFY` antes de poder pisar el estado `OPEN`.
+
+* **FSM Escaneo de tecla**
+
+     <img width="1200" height="1600" alt="image" src="https://github.com/Electronicadigital1/lab-6-g5-grupo-3/blob/main/bloques.jpeg" />
+
+     
+* **FSM Control de clave:**
+   <img width="1200" height="1600" alt="image" src="https://github.com/Electronicadigital1/lab-6-g5-grupo-3/blob/main/bloques.jpeg" />
 
 
-  stateDiagram-v2
-    [*] --> ESCANEO
-    ESCANEO --> VALIDAR_PRESION : Si alguna columna baja a 0
-    VALIDAR_PRESION --> ESCANEO : Si fue un falso contacto
-    VALIDAR_PRESION --> ESPERAR_LIBERACION : Si la tecla sigue hundida tras 60ms
-    ESPERAR_LIBERACION --> VALIDAR_LIBERACION : Si todas las columnas vuelven a 1
-    VALIDAR_LIBERACION --> ESPERAR_LIBERACION : Si se volvió a presionar antes de tiempo
-    VALIDAR_LIBERACION --> ESCANEO : Si se mantiene libre tras 60ms (Manda Tecla Válida)
-
-
-  stateDiagram-v2
-    [*] --> IDLE
-    IDLE --> INPUT : Se detecta una nueva tecla
-    INPUT --> INPUT : Guarda dígito y corre registro (Mínimo 4 veces)
-    INPUT --> VERIFY : Al completar los 4 dígitos
-    VERIFY --> OPEN : Contraseña coincide (1234)
-    VERIFY --> ERROR : Contraseña incorrecta
-    OPEN --> IDLE : Se presiona '*' (Cierra puerta y limpia)
-    ERROR --> IDLE : Se presiona '*' (Quita LED de error)
 
 ### C. Sincronización entre Dominios de Reloj
 El escáner del teclado trabaja con el reloj lento (1 kHz), mientras que la FSM de control procesa los datos con el reloj rápido de la FPGA (50 MHz). Conectar la señal de validación directamente generaba lecturas inestables o pérdida de pulsaciones.
 * **Solución:** Se añadieron biestables de sincronización de doble etapa (`key_valid_sync1` y `key_valid_sync2`) en el módulo de control para estabilizar la señal de entrada al dominio de 50 MHz. Adicionalmente, se creó un detector de flancos (`nueva_tecla`) que captura el pulso de manera limpia en un único ciclo de reloj.
 
-### D. Inversión de la Lógica del Reset Físico
-El botón de reset integrado en nuestra placa de desarrollo opera con lógica inversa (mantiene un '1' lógico por defecto y cae a '0' únicamente al ser presionado). Esto provocaba que el sistema se iniciara bloqueado en un estado de reinicio constante.
-* **Solución:** En el módulo `top_sistema.v` se implementó una línea de inversión lógica: `wire rst_interno = ~rst;`. De esta forma, el sistema arranca con normalidad y solo se reinicia al presionar físicamente el pulsador.
-
 ---
+### D. Evidencias
+
+
+
 
 ## 3. Conclusiones
 
 * **Eficiencia del Registro de Desplazamiento:** La técnica de concatenación de bits (`pass_in <= {pass_in[11:0], tecla};`) demostró ser una solución óptima en hardware para almacenar datos secuenciales en formato BCD, evitando el uso de estructuras de memoria o direccionamientos complejos.
 * **Robustez mediante FSM:** Las máquinas de estados finitos son la herramienta fundamental para el diseño de sistemas de control seguros. Permitieron establecer un flujo riguroso de eventos, garantizando que el actuador físico jamás responda si no se cumple previamente con la validación de la clave.
-* **Diseño orientado al entorno físico:** El desarrollo en FPGA requiere prever las imperfecciones mecánicas de los periféricos. El manejo de tiempos de rebote (*debounce*) y la sincronización de señales asíncronas son pasos obligatorios para trasladar con éxito un diseño del simulador al mundo real.
 * **Integración Digital-Mecánica:** La combinación de procesamiento digital con modulación por ancho de pulso (PWM) permitió controlar un elemento mecánico real (servomotor) a partir de un flujo de datos numéricos, asentando las bases para el diseño de cerraduras electrónicas y sistemas de acceso cotidianos.
 
 ---
@@ -105,8 +92,7 @@ El botón de reset integrado en nuestra placa de desarrollo opera con lógica in
 ## 5. Referencias
 
 * *Guía de Laboratorio 05 – Parte 2: Registro de Desplazamiento y Sistema de Contraseña con Control de Servo.*
-* Mano, M. M., & Ciletti, M. D. (2013). *Digital Design: With an Introduction to the Verilog HDL*. Pearson.
-"""
+
 
 with open("README.md", "w", encoding="utf-8") as f:
     f.write(readme_content)
