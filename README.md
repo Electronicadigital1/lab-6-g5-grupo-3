@@ -53,11 +53,11 @@ Tanto para el escaneo de pines como para la lógica de validación de la contras
 
 * **FSM Escaneo de tecla**
 
-     <img width="1200" height="1600" alt="image" src="https://github.com/Electronicadigital1/lab-6-g5-grupo-3/blob/main/bloques.jpeg" />
+     <img width="1200" height="1600" alt="image" src="https://github.com/Electronicadigital1/lab-6-g5-grupo-3/blob/main/fsm2.jpeg" />
 
      
 * **FSM Control de clave:**
-   <img width="1200" height="1600" alt="image" src="https://github.com/Electronicadigital1/lab-6-g5-grupo-3/blob/main/bloques.jpeg" />
+   <img width="1200" height="1600" alt="image" src="https://github.com/Electronicadigital1/lab-6-g5-grupo-3/blob/main/fsm1.jpeg" />
 
 
 
