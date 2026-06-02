@@ -50,8 +50,28 @@ El teclado matricial físico demostró ser sumamente sensible. Inicialmente, con
 ### B. Uso de Máquinas de Estados Finitos (FSM)
 Tanto para el escaneo de pines como para la lógica de validación de la contraseña, se utilizaron estructuras de **máquinas de estados finitos**. Por ejemplo, el control de la contraseña transita de forma ordenada por los estados `IDLE` (espera), `INPUT` (captura de dígitos), `VERIFY` (comparación de contraseñas), y finalmente bifurca hacia `OPEN` (apertura) o `ERROR` (bloqueo).
 * **Utilidad del diseño con FSM:** Dividir el comportamiento en etapas lógicas bien definidas aporta grandes ventajas en hardware:
-  1. **Seguridad e predictibilidad:** El sistema tiene un comportamiento totalmente controlado; por ejemplo, el servomotor tiene prohibido activarse de la nada, ya que la FSM obliga al circuito a pasar estrictamente por el estado `VERIFY` antes de poder pisar el estado `OPEN`.
-  2. **Facilidad de diagnóstico:** Si el teclado fallaba al liberar una tecla, sabíamos con precisión matemática que el error residía en el estado `VALIDAR_LIBERACION`, permitiendo aislar y corregir fallas sin alterar la lógica de los otros estados.
+   **Seguridad e predictibilidad:** El sistema tiene un comportamiento totalmente controlado; por ejemplo, el servomotor tiene prohibido activarse de la nada, ya que la FSM obliga al circuito a pasar estrictamente por el estado `VERIFY` antes de poder pisar el estado `OPEN`.
+
+
+  stateDiagram-v2
+    [*] --> ESCANEO
+    ESCANEO --> VALIDAR_PRESION : Si alguna columna baja a 0
+    VALIDAR_PRESION --> ESCANEO : Si fue un falso contacto
+    VALIDAR_PRESION --> ESPERAR_LIBERACION : Si la tecla sigue hundida tras 60ms
+    ESPERAR_LIBERACION --> VALIDAR_LIBERACION : Si todas las columnas vuelven a 1
+    VALIDAR_LIBERACION --> ESPERAR_LIBERACION : Si se volvió a presionar antes de tiempo
+    VALIDAR_LIBERACION --> ESCANEO : Si se mantiene libre tras 60ms (Manda Tecla Válida)
+
+
+  stateDiagram-v2
+    [*] --> IDLE
+    IDLE --> INPUT : Se detecta una nueva tecla
+    INPUT --> INPUT : Guarda dígito y corre registro (Mínimo 4 veces)
+    INPUT --> VERIFY : Al completar los 4 dígitos
+    VERIFY --> OPEN : Contraseña coincide (1234)
+    VERIFY --> ERROR : Contraseña incorrecta
+    OPEN --> IDLE : Se presiona '*' (Cierra puerta y limpia)
+    ERROR --> IDLE : Se presiona '*' (Quita LED de error)
 
 ### C. Sincronización entre Dominios de Reloj
 El escáner del teclado trabaja con el reloj lento (1 kHz), mientras que la FSM de control procesa los datos con el reloj rápido de la FPGA (50 MHz). Conectar la señal de validación directamente generaba lecturas inestables o pérdida de pulsaciones.
