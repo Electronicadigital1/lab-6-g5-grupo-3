@@ -68,8 +68,7 @@ El escáner del teclado trabaja con el reloj lento (1 kHz), mientras que la FSM 
 ---
 ### D. Evidencias
 
- <video width="1200" height="1600" alt="video" src="https://raw.githubusercontent.com/Electronicadigital1/lab-6-g5-grupo-3/main/funcionamiento.mp4" />
-
+ 
 ## 3. Conclusiones
 
 * **Eficiencia del Registro de Desplazamiento:** La técnica de concatenación de bits (`pass_in <= {pass_in[11:0], tecla};`) demostró ser una solución óptima en hardware para almacenar datos secuenciales en formato BCD, evitando el uso de estructuras de memoria o direccionamientos complejos.
