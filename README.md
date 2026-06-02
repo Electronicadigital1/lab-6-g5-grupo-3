@@ -75,7 +75,7 @@ El escáner del teclado trabaja con el reloj lento (1 kHz), mientras que la FSM 
 
      
 * **Clave correcta y puerta abierta**
-   <img width="1200" height="1600" alt="image" src="https://github.com/Electronicadigital1/lab-6-g5-grupo-3/blob/main/fsm1.jpeg" />
+   <img width="1200" height="1600" alt="image" src="https://github.com/Electronicadigital1/lab-6-g5-grupo-3/blob/main/CORRECTA.jpeg" />
  
 ## 3. Conclusiones
 
