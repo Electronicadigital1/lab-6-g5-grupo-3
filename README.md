@@ -15,11 +15,14 @@ Correo: satovarv@unal.edu.co
 
 Indice:
 
-1. [Diseño implementado](#diseño-implementado)
-2. [Simulaciones](#simulaciones)
-3. [Implementación](#implementación)
-4. [Conclusiones](#conclusiones)
-5. [Referencias](#referencias)
+## Índice
+
+1. [Introducción y Objetivos](#1-introducción-y-objetivos)
+2. [Descripción de la Arquitectura de Hardware](#2-descripción-de-la-arquitectura-de-hardware)
+3. [Diagrama de la Máquina de Estados Finitos (FSM)](#3-diagrama-de-la-máquina-de-estados-finitos-fsm)
+4. [Implementación en Hardware](#4-implementación-en-hardware)
+5. [Evidencias de Funcionamiento](#5-evidencias-de-funcionamiento)
+6. [Conclusiones](#6-conclusiones)
 
 ## 1. Introducción y Objetivos
 Este laboratorio introduce el diseño de hardware mediante Máquinas de Estados Finitos (FSM) utilizando Verilog HDL para interactuar con una pantalla LCD alfanumérica de 16x2 en modo de 8 bits. 
@@ -84,16 +87,21 @@ A continuación, se presentan las pruebas fotográficas de la implementación f�
 <img width="1200" height="1600" alt="image" src="https://github.com/user-attachments/assets/a9a0ad0f-19bb-46c6-b3a4-dc5ab20a5e92" />
 
 
-
 Inicialización de la Máquina de Estados
 Durante los primeros ciclos de reloj, la FSM envía los comandos de configuración, limpia la pantalla y procede a escribir exitosamente el texto estático correspondiente a la primera fila, demostrando el correcto funcionamiento del estado WR_STATIC_TEXT_1L.
 
 Ciclo Completo de Escritura
 Tras enviar el comando de salto de línea (0xC0) en el estado CONFIG_CMD2, la FSM transiciona al estado WR_STATIC_TEXT_2L y completa la visualización de la memoria. La pantalla despliega los mensajes "Bateria 1" y "Bateria 2" de manera estable y continua.
 
+## 6. Conclusiones
 
-## 5. Referencias
+* **Control Secuencial mediante FSM:** La implementación de una Máquina de Estados Finitos (FSM) en Verilog demostró ser la arquitectura de *hardware* ideal para el manejo de la pantalla LCD. Dado que el lenguaje de descripción de hardware es inherentemente concurrente, la FSM permitió imponer un flujo secuencial riguroso, garantizando que los comandos de inicialización y los datos de los caracteres se enviaran en el orden estricto que exige el controlador de la pantalla.
+* **Sincronización y Dominios de Reloj:** Se comprobó la importancia crítica de adaptar las velocidades de procesamiento entre distintos dispositivos físicos. La frecuencia nativa de la FPGA (50 MHz) es demasiado alta para los tiempos de respuesta del display. El diseño del divisor de frecuencia para generar la señal `clk_16ms` fue fundamental para evitar la saturación del bus de datos y garantizar una visualización estable.
+* **Visualización Dinámica y Decodificación ASCII:** Se logró modificar con éxito un flujo de datos estático proveniente de una memoria ROM mediante la inyección en tiempo real de variables dinámicas. La implementación de lógica combinacional para sumar el *offset* hexadecimal (`8'h30`) a las entradas binarias de los interruptores evidenció cómo el *hardware* puede traducir y acondicionar señales físicas directas al estándar ASCII de manera instantánea.
+* **Consideraciones Físicas del Hardware:** El proceso de síntesis e implementación resaltó que el diseño en FPGA trasciende el código Verilog. La necesidad de reconfigurar pines de propósito dual (como el pin 101, `nCEO`) en Quartus Prime subraya la importancia de conocer a fondo la arquitectura física y las restricciones de la tarjeta de desarrollo específica (Altera Cyclone IV) para evitar fallos de compilación y colisiones eléctricas.
 
-* *Guía de Laboratorio 05 – Parte 2: Registro de Desplazamiento y Sistema de Contraseña con Control de Servo.*
+## 7. Referencias
+
+* *Guía de Laboratorio 06 – Parte 1 y 2.*
 
 
