@@ -21,69 +21,45 @@ Indice:
 4. [Conclusiones](#conclusiones)
 5. [Referencias](#referencias)
 
-## Diseño implementado:
+## 1. Introducción y Objetivos
+Este laboratorio introduce el diseño de hardware mediante Máquinas de Estados Finitos (FSM) utilizando Verilog HDL para interactuar con una pantalla LCD alfanumérica de 16x2 en modo de 8 bits. 
 
-El sistema se armó de forma modular en Verilog para que el flujo de datos fuera limpio: Entrada de datos (Teclado), luego el procesamiento (Validar la clave) y lograr la acción (Mover el motor).  Para que todo funcionara bien en la práctica y evitar problemas con los rebotes de los botones o los cambios de velocidad en los relojes, dividimos el código en 5 bloques principales conectados dentro de un módulo central (top_sistema.v):
-
-### Diagramas
-
- <img width="1200" height="1600" alt="image" src="https://github.com/Electronicadigital1/lab-6-g5-grupo-3/blob/main/bloques.jpeg" />
-  
-### Descripción de los Módulos
-
-1. **Divisor de Frecuencia (`divisor_frecuencia.v`):** Reduce el reloj principal de la FPGA (50 MHz) a una señal mucho más lenta de 1 kHz para el escaneo del teclado. Esto evita que el circuito lea las pulsaciones tan rápido que confunda el ruido eléctrico con teclas presionadas.
-2. **Escáner de Teclado (`escaner_teclado.v`):** Revisa las filas y columnas de forma secuencial para detectar qué tecla fue presionada. Implementa un contador de filtrado (*debounce*) para asegurar que la pulsación sea real y no un falso contacto.
-3. **Control de Clave (`control_clave.v`):** Es el bloque de control principal. Almacena los dígitos introducidos en un registro que desplaza los datos a la izquierda, cuenta que se ingresen 4 dígitos y los compara con la contraseña secreta parametrizada (`16'h1234`).
-4. **Módulo PWM (`pwm_servo.v`):** Genera la señal de control para el servomotor con un periodo de 20 ms. Si la puerta está configurada como abierta, envía un pulso de 2 ms; si está cerrada, envía un pulso de 1 ms.
-5. **Top del Sistema (`top_sistema.v`):** Módulo de más alto nivel que se encarga de interconectar todos los bloques anteriores y asignar las señales a los pines físicos de la placa de desarrollo (LEDs, servomotor y líneas del teclado).
+El proyecto se divide en dos fases:
+1. **Parte 1 (Estática):** Inicialización y escritura de cadenas de texto fijas leídas desde un bloque de memoria ROM basado en un archivo externo (`path_to_txt.txt`).
+2. **Parte 2 (Dinámica):** Modificación de la FSM y acoplamiento de lógica combinacional para interceptar la transmisión de datos e inyectar valores numéricos dinámicos en tiempo real provenientes de los interruptores individuales (*switches*) de la FPGA Altera Cyclone IV.
 
 ---
 
-## 2. Implementación y Ajustes Críticos
+## 2. Descripción de la Arquitectura de Hardware
 
-Al realizar las pruebas en el hardware real, se identificaron varios desfases entre el comportamiento ideal del simulador y los componentes físicos, los cuales se solucionaron mediante las siguientes modificaciones en el código:
+La solución implementada está contenida en el módulo `LCD1602_controller` y se compone de tres bloques estructurales descritos en hardware:
 
-### A. Ajuste del Reloj y Tiempo de Rebote del Teclado
-El teclado matricial físico demostró ser sumamente sensible. Inicialmente, con el tiempo estándar de 10 ms, una sola pulsación suave registraba el mismo dígito múltiples veces consecutivas debido a las vibraciones mecánicas internas de los contactos.
-* **Solución:** Se incrementó el parámetro `DEBOUNCE_TIME` a **60 ms**. Como el contador ahora requería alcanzar un valor mayor, se expandió el registro `contador_debounce` a **8 bits** en `escaner_teclado.v` para evitar desbordamientos numéricos. Con este cambio, el teclado lee exactamente un dígito por cada pulsación real.
+### A. Divisor de Frecuencia
+Dado que la FPGA opera a una frecuencia elevada (50 MHz) en comparación con los tiempos de respuesta requeridos por el estándar HD44780 de la LCD, se diseñó un contador parametrizado (`COUNT_MAX = 800000`) para generar una señal síncrona lenta de `clk_16ms`. Esta señal dicta el periodo de refresco de la máquina de estados y se conecta de forma directa a la salida física de habilitación (`enable`) de la pantalla.
 
-### B. Uso de Máquinas de Estados Finitos (FSM)
-Tanto para el escaneo de pines como para la lógica de validación de la contraseña, se utilizaron estructuras de **máquinas de estados finitos**. Por ejemplo, el control de la contraseña transita de forma ordenada por los estados `IDLE` (espera), `INPUT` (captura de dígitos), `VERIFY` (comparación de contraseñas), y finalmente bifurca hacia `OPEN` (apertura) o `ERROR` (bloqueo).
-* **Utilidad del diseño con FSM:** Dividir el comportamiento en etapas lógicas bien definidas aporta grandes ventajas en hardware: El sistema tiene un comportamiento totalmente controlado; por ejemplo, el servomotor tiene prohibido activarse de la nada, ya que la FSM obliga al circuito a pasar estrictamente por el estado `VERIFY` antes de poder pisar el estado `OPEN`.
+### B. Unidad de Decodificación ASCII
+Para cumplir con los requerimientos dinámicos, el módulo captura un bus de entrada de 6 bits correspondiente a los interruptores (`input [5:0] sw`). El bus se segmenta en dos grupos de 3 bits:
+* `sw[5:3]` para la medición de la Batería 1 (rango entero de 0 a 7).
+* `sw[2:0]` para la medición de la Batería 2 (rango entero de 0 a 7).
 
-* **FSM Escaneo de tecla**
+A nivel combinacional, se realiza una conversión sumando el offset hexadecimal del carácter cero en la tabla ASCII (`8'h30`):
+* `assign decodificador_L1 = 8'h30 + sw[5:3];`
+* `assign decodificador_L2 = 8'h30 + sw[2:0];`
 
-     <img width="1200" height="1600" alt="image" src="https://github.com/Electronicadigital1/lab-6-g5-grupo-3/blob/main/fm2.jpeg" />
+### C. Máquina de Estados Finitos (FSM)
+La lógica de control se rige por una FSM síncrona al flanco de subida de `clk_16ms` con 5 estados operativos:
 
-     
-* **FSM Control de clave:**
-   <img width="1200" height="1600" alt="image" src="https://github.com/Electronicadigital1/lab-6-g5-grupo-3/blob/main/fsm1.jpeg" />
-
-
-
-### C. Sincronización entre Dominios de Reloj
-El escáner del teclado trabaja con el reloj lento (1 kHz), mientras que la FSM de control procesa los datos con el reloj rápido de la FPGA (50 MHz). Conectar la señal de validación directamente generaba lecturas inestables o pérdida de pulsaciones.
-* **Solución:** Se añadieron biestables de sincronización de doble etapa (`key_valid_sync1` y `key_valid_sync2`) en el módulo de control para estabilizar la señal de entrada al dominio de 50 MHz. Adicionalmente, se creó un detector de flancos (`nueva_tecla`) que captura el pulso de manera limpia en un único ciclo de reloj.
-
----
-### D. Evidencias
-
-
-* **Clave incorrecta y puerta cerrada**
-
-     <img width="1200" height="1600" alt="image" src="https://github.com/Electronicadigital1/lab-6-g5-grupo-3/blob/main/CLAVEMAL.jpeg" />
-
-     
-* **Clave correcta y puerta abierta**
-   <img width="1200" height="1600" alt="image" src="https://github.com/Electronicadigital1/lab-6-g5-grupo-3/blob/main/CORRECTA.jpeg" />
- 
-## 3. Conclusiones
-
-* **Eficiencia del Registro de Desplazamiento:** La técnica de concatenación de bits (`pass_in <= {pass_in[11:0], tecla};`) demostró ser una solución óptima en hardware para almacenar datos secuenciales en formato BCD, evitando el uso de estructuras de memoria o direccionamientos complejos.
-* **Robustez mediante FSM:** Las máquinas de estados finitos son la herramienta fundamental para el diseño de sistemas de control seguros. Permitieron establecer un flujo riguroso de eventos, garantizando que el actuador físico jamás responda si no se cumple previamente con la validación de la clave.
-* **Integración Digital-Mecánica:** La combinación de procesamiento digital con modulación por ancho de pulso (PWM) permitió controlar un elemento mecánico real (servomotor) a partir de un flujo de datos numéricos, asentando las bases para el diseño de cerraduras electrónicas y sistemas de acceso cotidianos.
+1. **`IDLE` (3'b000):** Estado de reposo. Permanece retenido hasta recibir la bandera lógica `ready_i = 1`.
+2. **`CONFIG_CMD1` (3'b001):** Rutina secuencial de inicialización. Envía consecutivamente 4 comandos almacenados en `config_mem`: modo de bus a 8 bits/2 líneas (`8'h38`), desplazamiento del cursor a la derecha (`8'h06`), encendido de pantalla sin cursor (`8'h0C`), y limpieza general del display (`8'h01`). Durante este estado, la señal de control mantiene `rs = 0` (Modo Comando).
+3. **`WR_STATIC_TEXT_1L` (3'b010):** Modo escritura de datos (`rs = 1`). Envía de forma secuencial los primeros 16 bytes direccionados en `static_data_mem`. Al alcanzar la posición de memoria indexada por `data_counter == 4'd12`, el flujo directo de la memoria ROM se intercepta para inyectar el bus síncrono `decodificador_L1`, imprimiendo el estado dinámico de la primera batería.
+4. **`CONFIG_CMD2` (3'b011):** Transición síncrona de control (`rs = 0`). Transmite el comando de salto de línea `START_2LINE` (`8'hC0`) para reubicar la dirección de la DDRAM interna de la pantalla al inicio de la segunda línea física.
+5. **`WR_STATIC_TEXT_2L` (3'b100):** Envía secuencialmente los 16 caracteres de la segunda línea. Al igual que en la primera línea, el flujo es interceptado cuando `data_counter == 4'd12` para mapear el bus dinámico `decodificador_L2` modificado por los interruptores de hardware. Una vez completado, el sistema retorna a `IDLE`.
 
 ---
+
+## 3. Diagrama de la Máquina de Estados Finitos (FSM)
+
+El siguiente modelo describe de forma abstracta las transiciones lógicas implementadas en el bloque multiplexor del controlador:
 
 ## 4. Estructura del Repositorio
 
