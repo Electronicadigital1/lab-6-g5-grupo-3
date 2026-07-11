@@ -76,15 +76,21 @@ Al energizar la FPGA, la pantalla se inicializa limpiamente cargando el texto pl
 
 Donde `X` e `Y` varían instantáneamente de `0` a `7` al modificar el código binario de los interruptores físicos `sw[5:3]` y `sw[2:0]` respectivamente, validando la integridad del multiplexor y del decodificador combinacional ASCII integrados directamente en el flujo secuencial de la FSM.
 
-## 5. Estructura del Repositorio
+## 5. Evidencias de Funcionamiento
+A continuación, se presentan las pruebas fotográficas de la implementación física operando en la tarjeta de desarrollo:
 
-* `/` (`top_sistema.v`): Módulo de jerarquía superior que interconecta todo el sistema.
-* `/` (`control_clave.v`): FSM de control, almacenamiento por desplazamiento y comparador de contraseña.
-* `/` (`escaner_teclado.v`): FSM de escaneo matricial de filas/columnas y filtro de rebotes.
-* `/` (`pwm_servo.v`): Generador de señal PWM para la posición del servomotor a 20 ms de periodo.
-* `/` (`divisor_frecuencia.v`): Divisor de reloj para reducir la frecuencia de 50 MHz a 1 kHz.
+<img width="1200" height="1600" alt="image" src="https://github.com/user-attachments/assets/e164a881-1103-4f86-a759-e3a944b2dd10" />
 
----
+<img width="1200" height="1600" alt="image" src="https://github.com/user-attachments/assets/a9a0ad0f-19bb-46c6-b3a4-dc5ab20a5e92" />
+
+
+
+Inicialización de la Máquina de Estados
+Durante los primeros ciclos de reloj, la FSM envía los comandos de configuración, limpia la pantalla y procede a escribir exitosamente el texto estático correspondiente a la primera fila, demostrando el correcto funcionamiento del estado WR_STATIC_TEXT_1L.
+
+Ciclo Completo de Escritura
+Tras enviar el comando de salto de línea (0xC0) en el estado CONFIG_CMD2, la FSM transiciona al estado WR_STATIC_TEXT_2L y completa la visualización de la memoria. La pantalla despliega los mensajes "Bateria 1" y "Bateria 2" de manera estable y continua.
+
 
 ## 5. Referencias
 
