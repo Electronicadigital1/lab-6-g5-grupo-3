@@ -61,7 +61,22 @@ La lógica de control se rige por una FSM síncrona al flanco de subida de `clk_
 
 El siguiente modelo describe de forma abstracta las transiciones lógicas implementadas en el bloque multiplexor del controlador:
 
-## 4. Estructura del Repositorio
+## 4. Implementación y Resultados en Hardware
+
+Para la carga exitosa del sistema en la tarjeta de desarrollo **Altera Cyclone IV**, se ejecutó la siguiente metodología de configuración en el entorno Quartus Prime:
+
+1. **Estructura del Proyecto:** El diseño estructural fue compilado vinculando la entidad de nivel superior `LCD1602_controller.v` junto al archivo de inicialización de caracteres estáticos `path_to_txt.txt` cargado verticalmente con los bytes en formato hexadecimal provistos para la visualización de texto base.
+2. **Asignación de Pines y Restricciones:** Se enrutaron los puertos del bus de datos (`data[7:0]`) y las señales de sincronismo (`rs`, `rw`, `enable`) de acuerdo al mapeo de los conectores del *header* LCD de la placa de desarrollo.
+3. **Liberación del Pin Dual 101:** Para habilitar el pin físico de la FPGA asignado a la línea de datos del módulo de visualización, se ingresó al menú *Assignments -> Device -> Device and Pin Options -> Dual-Purpose Pins* modificando el estado por defecto del pin de propósito dual `nCEO` a la configuración de operación normal **"Use as regular I/O"**.
+
+### Comportamiento Dinámico Verificado:
+Al energizar la FPGA, la pantalla se inicializa limpiamente cargando el texto plano estático:
+* **Fila 1:** `Bateria 1: X`
+* **Fila 2:** `Bateria 2: Y`
+
+Donde `X` e `Y` varían instantáneamente de `0` a `7` al modificar el código binario de los interruptores físicos `sw[5:3]` y `sw[2:0]` respectivamente, validando la integridad del multiplexor y del decodificador combinacional ASCII integrados directamente en el flujo secuencial de la FSM.
+
+## 5. Estructura del Repositorio
 
 * `/` (`top_sistema.v`): Módulo de jerarquía superior que interconecta todo el sistema.
 * `/` (`control_clave.v`): FSM de control, almacenamiento por desplazamiento y comparador de contraseña.
